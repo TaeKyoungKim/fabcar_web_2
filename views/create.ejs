@@ -1,5 +1,5 @@
 <%- include('_header.ejs') -%>
-<form name="myForm" method="POST" , action="/create">
+<form name="myForm" onsubmit="return validateForm()" method="POST"  action="/create">
     <div class="form-group">
       <label for="exampleInputEmail1">Unique Key</label>
       <input type="text" name="KEY" value=""class="form-control"  required >

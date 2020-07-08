@@ -34,7 +34,7 @@
               <tbody>
                   <% for(i=0;i<data.length; i++) {%>
                       <tr>
-                        <td><%= i+1 %></td>
+                        <a href="/detaildata/<%= data[i].Key %>"><td><%= i+1 %></td></a><td><%= i+1 %></td>
                         <td><%= data[i].Key %></td>
                         <td><%= data[i].Record.color %></td>
                         <td><%= data[i].Record.docType %></td>

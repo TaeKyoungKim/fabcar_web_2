@@ -17,6 +17,7 @@
     "fabric-ca-client": "^1.4.10",
     "fabric-network": "^1.4.10",
     "fs": "0.0.1-security",
+    "mongoose": "^5.9.22",
     "path": "^0.12.7"
   }
 }

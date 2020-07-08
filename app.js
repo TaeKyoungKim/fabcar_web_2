@@ -4,6 +4,10 @@ var bodyParser = require('body-parser')
 var ejs = require('ejs')
 var app = express()
 require('dotenv').config()
+var mongoose  = require('mongoose')
+
+var MONGO_URL = process.env.M_URL
+mongoose.connect(MONGO_URL,{ useNewUrlParser: true,useUnifiedTopology: true  })
 
 var apiRouter = require('./routes/Router')
 //templetes file settings
