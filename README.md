@@ -1,4 +1,3 @@
-# fabcar_web_2
 fabcar_web_2
 
 OS : ubuntu1.8 버전
@@ -358,5 +357,257 @@ views/_footer.ejs
 </body>
 </html>
 ```
+
+
+
+
+
+utils/Util.js 파일에   network에 query 및 invoke 코드 추가하기 위해 fabcar/query.js 와  invoke.js 파일을 참조해서 응용
+
+query.js 있는 
+
+
+
+```javascript
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+'use strict';
+
+const { FileSystemWallet, Gateway } = require('fabric-network');
+const fs = require('fs');
+const path = require('path');
+
+const ccpPath = path.resolve(__dirname, '..', '..', 'basic-network', 'connection.json');
+const ccpJSON = fs.readFileSync(ccpPath, 'utf8');
+const ccp = JSON.parse(ccpJSON);
+
+async function main() {
+    try {
+
+        // Create a new file system based wallet for managing identities.
+        const walletPath = path.join(process.cwd(), 'wallet');
+        const wallet = new FileSystemWallet(walletPath);
+        console.log(`Wallet path: ${walletPath}`);
+
+        // Check to see if we've already enrolled the user.
+        const userExists = await wallet.exists('user1');
+        if (!userExists) {
+            console.log('An identity for the user "user1" does not exist in the wallet');
+            console.log('Run the registerUser.js application before retrying');
+            return;
+        }
+
+        // Create a new gateway for connecting to our peer node.
+        const gateway = new Gateway();
+        await gateway.connect(ccp, { wallet, identity: 'user1', discovery: { enabled: false } });
+
+        // Get the network (channel) our contract is deployed to.
+        const network = await gateway.getNetwork('mychannel');
+
+        // Get the contract from the network.
+        const contract = network.getContract('fabcar');
+
+        // Evaluate the specified transaction.
+        // queryCar transaction - requires 1 argument, ex: ('queryCar', 'CAR4')
+        // queryAllCars transaction - requires no arguments, ex: ('queryAllCars')
+        const result = await contract.evaluateTransaction('queryAllCars');
+        console.log(`Transaction has been evaluated, result is: ${result.toString()}`);
+
+    } catch (error) {
+        console.error(`Failed to evaluate transaction: ${error}`);
+        process.exit(1);
+    }
+}
+
+main();
+
+```
+
+ 
+
+```javascript
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+'use strict';
+
+const { FileSystemWallet, Gateway } = require('fabric-network');
+const fs = require('fs');
+const path = require('path');
+
+
+const ccpPath = path.resolve(__dirname, '..', 'basic-network', 'connection.json');
+const ccpJSON = fs.readFileSync(ccpPath, 'utf8');
+const ccp = JSON.parse(ccpJSON);
+
+
+async function query_all_data() {
+    try {
+
+        // Create a new file system based wallet for managing identities.
+        const walletPath = path.join(process.cwd(), 'wallet');
+        const wallet = new FileSystemWallet(walletPath);
+        console.log(`Wallet path: ${walletPath}`);
+
+        // Check to see if we've already enrolled the user.
+        const userExists = await wallet.exists('user1');
+        if (!userExists) {
+            console.log('An identity for the user "user1" does not exist in the wallet');
+            console.log('Run the registerUser.js application before retrying');
+            return;
+        }
+
+        // Create a new gateway for connecting to our peer node.
+        const gateway = new Gateway();
+        await gateway.connect(ccp, { wallet, identity: 'user1', discovery: { enabled: false } });
+
+        // Get the network (channel) our contract is deployed to.
+        const network = await gateway.getNetwork('mychannel');
+
+        // Get the contract from the network.
+        const contract = network.getContract('fabcar');
+
+        // Evaluate the specified transaction.
+        const result = await contract.evaluateTransaction('queryAllCars');
+        console.log(`Transaction has been evaluated, result is: ${result.toString()}`);
+        return result.toString();
+    } catch (error) {
+        console.error(`Failed to evaluate transaction: ${error}`);
+        process.exit(1);
+    }
+}
+
+module.exports=query_all_data;
+```
+
+
+
+이부분을 추가 
+
+```javascript
+ccpPath 부분에서 __dirname, '..', 'basic-network', 'connection.json' 부분을basic-network 경로를 상대적으로 설정을 해줘야 한다.
+
+contract.evaluateTransaction('queryAllCars'); 
+queryAllCars는 chaincode 함수로 정의 내려진 부분이고 이 함수는 조회를 하는 함수이므로 
+evaluateTransaction()메소드를 사용하였다.
+```
+
+
+
+routes/Router.js파일에 
+
+```javascript
+router.get('/',(req, res , next)=>{
+    res.render('index')
+})
+```
+
+
+
+이부분에 Util.js 파일에 함수를 활용한다.
+
+
+
+```javascript
+....
+var Util = require('../utils/Util')
+....
+
+router.get('/', async (req, res , next)=>{
+    var result  = await queryUtil()
+    var resultData  = await JSON.parse(result)
+    
+    console.log(resultData)
+    // res.send(resultData)
+    res.render('index', {data:resultData})
+})
+```
+
+으로 수정
+
+
+
+테스트를 진행하기 위해 
+
+```shell
+node app.js 
+실행
+```
+
+클라이언트에서 http://localhost:8000 get방식으로 접속하고 
+
+console창을 확인해서 데이터가 잘 받아지는 확인한다.
+
+
+
+index.ejs에서 Table에 받아온 데이터를 보여주기 위해 다음과 같이 코딩
+
+```ejs
+<%- include('_header.ejs') -%>
+<!-- DataTales Example -->
+  <div class="card shadow mb-4">
+    <div class="card-header py-3">
+      <h6 class="m-0 font-weight-bold text-primary">Car Example</h6>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+          <thead>
+            <tr>
+                <th>NO</th>
+                <th>KEY</th>
+                <th>COLOR</th>
+                <th>DOCTYPE</th>
+                <th>MAKE</th>
+                <th>MODEL</th>
+                <th>OWNER</th>
+                <th>비고</th>
+            </tr>
+          </thead>
+          <tfoot>
+            <tr>
+                <th>NO</th>
+                <th>KEY</th>
+                <th>COLOR</th>
+                <th>DOCTYPE</th>
+                <th>MAKE</th>
+                <th>MODEL</th>
+                <th>OWNER</th>
+                <th>비고</th>
+            </tr>
+          </tfoot>
+          <tbody>
+              <% for(i=0;i<data.length; i++) {%>
+                  <tr>
+                    <td><%= i+1 %></td>
+                    <td><%= data[i].Key %></td>
+                    <td><%= data[i].Record.color %></td>
+                    <td><%= data[i].Record.docType %></td>
+                    <td><%= data[i].Record.make %></td>
+                    <td><%= data[i].Record.model %></td>
+                    <td><%= data[i].Record.owner %></td>
+                    <td><button>수정</button></td>
+                  </tr>
+                  <% } %>
+            </tbody>
+</table>
+          <%- include('_footer.ejs') -%>
+```
+
+
+
+
+
+수정
+
+http://localhost:8000 클라이언트에서 접소
+
+![](C:\Users\pc\Desktop\수업관련이미지\localhost8000.PNG)
+
+페이지 확인
+
 
 
