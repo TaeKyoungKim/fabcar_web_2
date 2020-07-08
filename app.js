@@ -4,6 +4,8 @@ var bodyParser = require('body-parser')
 var ejs = require('ejs')
 var app = express()
 require('dotenv').config()
+
+var apiRouter = require('./routes/Router')
 //templetes file settings
 app.set('views', path.resolve(__dirname + '/views'))
 app.set('view engine', 'ejs')
@@ -18,10 +20,8 @@ app.use(bodyParser.json())
 var cors  = require('cors')
 app.use(cors())
 
-
-app.get('/',(req, res , next)=>{
-    res.send("Success")
-})
+//routing파일 등록
+app.use('/', apiRouter)
 
 var port = process.env.PORT || 3000
 app.listen(port , ()=>{
