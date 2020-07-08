@@ -1269,3 +1269,89 @@ router.get('/detaildata/:carnum', async (req, res , next)=>{
 
 
 
+CAR소유주 변경 기능 위한 코드 추가
+
+views/changeowner.ejs
+
+```ejs
+<%- include('_header.ejs') -%>
+<form name="myForm" onsubmit="return validateForm()" method="POST"  action="/changeowner">
+    <div class="form-group">
+      <label for="exampleInputEmail1">Unique Key</label>
+      <input type="text" name="KEY" value=""class="form-control"  required >
+    </div>
+    
+    <div class="form-group">
+        <label for="exampleInputEmail1">OWNER</label>
+        <input type="text" name="owner" value=""class="form-control"  required>
+    </div>
+
+   
+    <button type="submit" class="btn btn-primary">Submit</button>
+  </form>
+  <script>
+        function validateForm() {
+              var x = document.forms["myForm"]["KEY"].value;
+              var dataX = x.slice(0,3)
+              
+              if (dataX != "CAR") {
+                  alert("CAR + 넘버의형태로 입력해야 합니다");
+                  return false;
+              }
+                  return true
+              
+              }
+        </script>
+<%- include('_footer.ejs') -%>
+```
+
+
+
+
+
+Router.js에서 route.get('/changowner') 라우팅 코드를 추가한다.
+
+```javascript
+router.get('/changeowner' , async (req ,res , next)=>{
+    var result  = await queryUtil.queryAllData()
+    var resultData = JSON.parse(result)
+    res.render('changeowner', {data:resultData })
+})
+```
+
+추가
+
+CAR의 KEY값을 셀렉트로 처리하기 위하여 
+
+changeowner.ejs에서 <input type="text" name="KEY" value=""class="form-control"  required > 을 변경
+
+```ejs
+<select name="KEY" class="custom-select" id="inputGroupSelect01">
+            <option selected>Choose Key</option>
+            <% for (i=0;i<data.length;i++) { %>
+            <option value="<%= data[i].Key %>"><%= data[i].Key %></option>
+            <% } %>
+          </select>
+```
+
+
+
+변경
+
+
+
+Router.js
+
+
+
+```javascript
+router.post('/changeowner' ,async (req, res ,next)=>{
+    console.log(req.body.KEY)
+    var KEY = req.body.KEY
+    var owner = req.body.owner
+
+    await queryUtil.changeOwner(KEY , owner)
+    res.redirect('/') 
+})
+```
+
