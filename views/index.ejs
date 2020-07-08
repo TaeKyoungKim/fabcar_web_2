@@ -1,5 +1,51 @@
 <%- include('_header.ejs') -%>
-<h1>Index Page</h1>
+<!-- DataTales Example -->
+<div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">Car Example</h6>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+              <thead>
+                <tr>
+                    <th>NO</th>
+                    <th>KEY</th>
+                    <th>COLOR</th>
+                    <th>DOCTYPE</th>
+                    <th>MAKE</th>
+                    <th>MODEL</th>
+                    <th>OWNER</th>
+                    <th>비고</th>
+                </tr>
+              </thead>
+              <tfoot>
+                <tr>
+                    <th>NO</th>
+                    <th>KEY</th>
+                    <th>COLOR</th>
+                    <th>DOCTYPE</th>
+                    <th>MAKE</th>
+                    <th>MODEL</th>
+                    <th>OWNER</th>
+                    <th>비고</th>
+                </tr>
+              </tfoot>
+              <tbody>
+                  <% for(i=0;i<data.length; i++) {%>
+                      <tr>
+                        <td><%= i+1 %></td>
+                        <td><%= data[i].Key %></td>
+                        <td><%= data[i].Record.color %></td>
+                        <td><%= data[i].Record.docType %></td>
+                        <td><%= data[i].Record.make %></td>
+                        <td><%= data[i].Record.model %></td>
+                        <td><%= data[i].Record.owner %></td>
+                        <td><button>수정</button></td>
+                      </tr>
+                      <% } %>
+                </tbody>
+    </table>
 
 <%- include('_footer.ejs') -%>
 

@@ -10,6 +10,9 @@ var apiRouter = require('./routes/Router')
 app.set('views', path.resolve(__dirname + '/views'))
 app.set('view engine', 'ejs')
 
+
+//static file 등록
+app.use(express.static(__dirname +'/public'))
 //body-parser
 
 app.use(bodyParser.urlencoded({extended:true}))
