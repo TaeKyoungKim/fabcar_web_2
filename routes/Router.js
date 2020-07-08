@@ -73,4 +73,15 @@ router.post('/create' ,async (req, res , next)=>{
     
     await res.redirect("/")
 })
+
+
+router.get('/detaildata/:carnum', async (req, res , next)=>{
+    console.log(req.params.carnum)
+    var searchdata = req.params.carnum
+    var result  = await queryUtil.queryData(searchdata)
+    var resultData  = await JSON.parse(result)
+    
+    console.log(resultData)
+    res.render('detaildata', {data:resultData , KEY:searchdata})
+})
 module.exports = router;
