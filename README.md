@@ -611,3 +611,412 @@ http://localhost:8000 클라이언트에서 접소
 
 
 
+static 파일을 등록해서  
+
+app.js
+
+```javascript
+//static file 등록
+app.use(express.static(__dirname +'/public'))
+```
+
+
+
+public 폴더에 필요한 static 파일 등록후 사용
+
+![](C:\Users\pc\Desktop\수업관련이미지\static.PNG)
+
+등의 형식으로 사용
+
+
+
+CAR 조회 기능 추가
+
+Util.js 파일 수정
+
+```javascript
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+'use strict';
+
+const { FileSystemWallet, Gateway } = require('fabric-network');
+const fs = require('fs');
+const path = require('path');
+
+const ccpPath = path.resolve(__dirname, '..', 'basic-network', 'connection.json');
+const ccpJSON = fs.readFileSync(ccpPath, 'utf8');
+const ccp = JSON.parse(ccpJSON);
+
+
+async function query_all_data() {
+    try {
+
+        // Create a new file system based wallet for managing identities.
+        const walletPath = path.join(process.cwd(), 'wallet');
+        const wallet = new FileSystemWallet(walletPath);
+        console.log(`Wallet path: ${walletPath}`);
+
+        // Check to see if we've already enrolled the user.
+        const userExists = await wallet.exists('user1');
+        if (!userExists) {
+            console.log('An identity for the user "user1" does not exist in the wallet');
+            console.log('Run the registerUser.js application before retrying');
+            return;
+        }
+
+        // Create a new gateway for connecting to our peer node.
+        const gateway = new Gateway();
+        await gateway.connect(ccp, { wallet, identity: 'user1', discovery: { enabled: false } });
+
+        // Get the network (channel) our contract is deployed to.
+        const network = await gateway.getNetwork('mychannel');
+
+        // Get the contract from the network.
+        const contract = network.getContract('fabcar');
+
+        // Evaluate the specified transaction.
+        const result = await contract.evaluateTransaction('queryAllCars');
+        console.log(`Transaction has been evaluated, result is: ${result.toString()}`);
+        return result.toString();
+    } catch (error) {
+        console.error(`Failed to evaluate transaction: ${error}`);
+        process.exit(1);
+    }
+}
+async function query_data(searchdata) {
+    try {
+
+        // Create a new file system based wallet for managing identities.
+        const walletPath = path.join(process.cwd(), 'wallet');
+        const wallet = new FileSystemWallet(walletPath);
+        console.log(`Wallet path: ${walletPath}`);
+
+        // Check to see if we've already enrolled the user.
+        const userExists = await wallet.exists('user1');
+        if (!userExists) {
+            console.log('An identity for the user "user1" does not exist in the wallet');
+            console.log('Run the registerUser.js application before retrying');
+            return;
+        }
+
+        // Create a new gateway for connecting to our peer node.
+        const gateway = new Gateway();
+        await gateway.connect(ccp, { wallet, identity: 'user1', discovery: { enabled: false } });
+
+        // Get the network (channel) our contract is deployed to.
+        const network = await gateway.getNetwork('mychannel');
+
+        // Get the contract from the network.
+        const contract = network.getContract('fabcar');
+
+        // Evaluate the specified transaction.
+        const result = await contract.evaluateTransaction('queryCar', searchdata);
+        console.log(`Transaction has been evaluated, result is: ${result.toString()}`);
+        return result.toString();
+    } catch (error) {
+        console.error(`Failed to evaluate transaction: ${error}`);
+        process.exit(1);
+    }
+}
+
+var query ={
+    queryAllData: query_all_data,
+    queryData : query_data
+}
+module.exports=query;
+```
+
+Router.js
+
+```javascript
+var router = require('express').Router()
+var queryUtil = require('../utils/Util')
+
+router.get('/', async (req, res , next)=>{
+    var result  = await queryUtil.queryAllData()
+    var resultData  = await JSON.parse(result)
+    
+    console.log(resultData)
+    // res.send(resultData)
+    res.render('index', {data:resultData})
+})
+
+router.get('/searchdata', async (req, res , next)=>{
+    console.log(req.query.search)
+    var searchdata = req.query.search
+    var result  = await queryUtil.queryData(searchdata)
+    var resultData  = await JSON.parse(result)
+    
+    console.log(resultData)
+    // res.send(resultData)
+    res.render('searchdata', {data:resultData, KEY:searchdata})
+})
+
+module.exports = router;
+```
+
+
+
+과 같이 수정
+
+
+
+views/searchdata.ejs 생성 및 코드 추가
+
+```ejs
+<%- include('_header.ejs') -%>
+    
+        <!-- Begin Page Content -->
+        <div class="container-fluid">
+
+                <!-- Page Heading -->
+                <div class="d-sm-flex align-items-center justify-content-between mb-4">
+                  <h1 class="h3 mb-0 text-gray-800">Search Data</h1>
+                </div>
+      
+                <div class="row">
+      
+                  <!-- Earnings (Monthly) Card Example -->
+                  <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-primary shadow h-100 py-2">
+                      <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                          <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">COLOR</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><%= data.color %></div>
+                          </div>
+                          <div class="col-auto">
+                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+      
+                  <!-- Earnings (Annual) Card Example -->
+                  <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-success shadow h-100 py-2">
+                      <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                          <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">docType</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><%= data.docType %></div>
+                          </div>
+                          <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+      
+            <!-- Tasks Card Example -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-info shadow h-100 py-2">
+                      <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                          <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">제조사</div>
+                            <div class="row no-gutters align-items-center">
+                              <div class="col-auto">
+                                <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800"><%= data.make %></div>
+                              </div>
+                              <div class="col">
+                                <div class="progress progress-sm mr-2">
+                                  <div class="progress-bar bg-info" role="progressbar" style="width: 50%" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="col-auto">
+                            <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+      
+                  <!-- Pending Requests Card Example -->
+                  <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-danger shadow h-100 py-2">
+                      <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                          <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">차소유주</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><%= data.owner %></div>
+                          </div>
+                          <div class="col-auto">
+                            <i class="fas fa-comments fa-2x text-gray-300"></i>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                 <!-- Pending Requests Card Example -->
+                 <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-warning shadow h-100 py-2">
+                      <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                          <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">모델</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><%= data.model %></div>
+                          </div>
+                          <div class="col-auto">
+                            <i class="fas fa-comments fa-2x text-gray-300"></i>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+               
+                 <a href="/savedata/<%= KEY %>" class="btn btn-danger btn-icon-split">
+                    <span class="icon text-white-50">
+                      <i class="fas fa-exclamation-triangle"></i>
+                    </span>
+                    <span class="text">Save At my DB</span>
+                  </a>
+                
+<%- include('_footer.ejs') -%>
+
+```
+
+과 같이 추가
+
+
+
+
+
+utils/Util.js
+
+
+
+Router.js파일에 
+
+```javascript
+router.get('/create' ,(req, res , next)=>{
+    res.render('create')
+})
+```
+
+views/create.ejs
+
+```ejs
+<%- include('_header.ejs') -%>
+<form method="POST" , action="/create">
+    <div class="form-group">
+      <label for="exampleInputEmail1">Unique Key</label>
+      <input type="text" name="KEY" value=""class="form-control"  required >
+    </div>
+    <div class="form-group">
+            <label for="exampleInputEmail1">COLOR</label>
+            <input type="text" name="color" value=""class="form-control"  required>
+          </div>
+    <div class="form-group">
+        <label for="exampleInputEmail1">MAKE</label>
+        <input type="text" name="make" value=""class="form-control"  required>
+        </div>
+    <div class="form-group">
+        <label for="exampleInputEmail1">MODEL</label>
+        <input type="text" name="model" value=""class="form-control"  required>
+    </div>
+    <div class="form-group">
+        <label for="exampleInputEmail1">OWNER</label>
+        <input type="text" name="owner" value=""class="form-control"  required>
+    </div>
+
+   
+    <button type="submit" class="btn btn-primary">Submit</button>
+  </form>
+
+<%- include('_footer.ejs') -%>
+```
+
+utils/Util.js
+
+
+
+```javascript
+var create_car = async (KEY ,color,make,model,owner)=>{
+    try {
+
+        // Create a new file system based wallet for managing identities.
+        const walletPath = path.join(process.cwd(), 'wallet');
+        const wallet = new FileSystemWallet(walletPath);
+        console.log(`Wallet path: ${walletPath}`);
+
+        // Check to see if we've already enrolled the user.
+        const userExists = await wallet.exists('user1');
+        if (!userExists) {
+            console.log('An identity for the user "user1" does not exist in the wallet');
+            console.log('Run the registerUser.js application before retrying');
+            return;
+        }
+
+        // Create a new gateway for connecting to our peer node.
+        const gateway = new Gateway();
+        await gateway.connect(ccp, { wallet, identity: 'user1', discovery: { enabled: false } });
+
+        // Get the network (channel) our contract is deployed to.
+        const network = await gateway.getNetwork('mychannel');
+
+        // Get the contract from the network.
+        const contract = network.getContract('fabcar');
+
+        // Submit the specified transaction.
+        
+        await contract.submitTransaction('createCar', KEY ,color,make,model,owner);
+        const result = await contract.evaluateTransaction('queryCar', KEY);
+        console.log('Transaction has been submitted'+ result.toString());
+
+        // Disconnect from the gateway.
+        await gateway.disconnect();
+
+    } catch (error) {
+        console.error(`Failed to submit transaction: ${error}`);
+        process.exit(1);
+    }
+}
+```
+
+추가
+
+```javascript
+var query ={
+    queryAllData: query_all_data,
+    queryData : query_data,
+    createCar :create_car
+}
+```
+
+
+
+수정
+
+
+
+Router.js
+
+
+
+```javascript
+router.post('/create' ,async (req, res , next)=>{
+    console.log(req.body.KEY)
+    var KEY = req.body.KEY
+    var color = req.body.color
+    var make = req.body.make
+    var model = req.body.model
+    var owner =  req.body.owner
+
+    await queryUtil.createCar(KEY ,color,make,model,owner)
+    
+    await res.redirect("/")
+})
+```
+
+추가한다.
+
