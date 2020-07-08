@@ -84,4 +84,19 @@ router.get('/detaildata/:carnum', async (req, res , next)=>{
     console.log(resultData)
     res.render('detaildata', {data:resultData , KEY:searchdata})
 })
+
+router.get('/changeowner' , async (req ,res , next)=>{
+    var result  = await queryUtil.queryAllData()
+    var resultData = JSON.parse(result)
+    res.render('changeowner', {data:resultData })
+})
+
+router.post('/changeowner' ,async (req, res ,next)=>{
+    console.log(req.body.KEY)
+    var KEY = req.body.KEY
+    var owner = req.body.owner
+
+    
+    res.send(req.body.KEY) 
+})
 module.exports = router;

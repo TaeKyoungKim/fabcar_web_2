@@ -1,0 +1,34 @@
+<%- include('_header.ejs') -%>
+<form name="myForm" onsubmit="return validateForm()" method="POST"  action="/changeowner">
+    <div class="form-group">
+      <label for="exampleInputEmail1">Unique Key</label>
+      <select name="KEY" class="custom-select" id="inputGroupSelect01">
+            <option selected>Choose Key</option>
+            <% for (i=0;i<data.length;i++) { %>
+            <option value="<%= data[i].Key %>"><%= data[i].Key %></option>
+            <% } %>
+          </select>
+    </div>
+    
+    <div class="form-group">
+        <label for="exampleInputEmail1">OWNER</label>
+        <input type="text" name="owner" value=""class="form-control"  required>
+    </div>
+
+   
+    <button type="submit" class="btn btn-primary">Submit</button>
+  </form>
+  <script>
+        function validateForm() {
+              var x = document.forms["myForm"]["KEY"].value;
+              var dataX = x.slice(0,3)
+              
+              if (dataX != "CAR") {
+                  alert("CAR + 넘버의형태로 입력해야 합니다");
+                  return false;
+              }
+                  return true
+              
+              }
+        </script>
+<%- include('_footer.ejs') -%>
