@@ -96,7 +96,7 @@ router.post('/changeowner' ,async (req, res ,next)=>{
     var KEY = req.body.KEY
     var owner = req.body.owner
 
-    
-    res.send(req.body.KEY) 
+    await queryUtil.changeOwner(KEY , owner)
+    res.redirect('/') 
 })
 module.exports = router;
