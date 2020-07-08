@@ -1019,3 +1019,253 @@ router.post('/create' ,async (req, res , next)=>{
 ```
 
 추가한다.
+
+
+
+mongoDb에 조회해온 데이터 값을 저장하는 기능
+
+views/savedata.ejs
+
+```ejs
+<%- include('_header.ejs') -%>
+<form method="POST" , action="/savedata">
+        <div class="form-group">
+          <label for="exampleInputEmail1">Unique Key</label>
+          <input type="text" name="KEY" value="<%= KEY %>"class="form-control" id="exampleInputEmail1" >
+        </div>
+        <div class="form-group">
+                <label for="exampleInputEmail1">COLOR</label>
+                <input type="text" name="color" value="<%= data.color %>"class="form-control" id="exampleInputEmail1" >
+              </div>
+        <div class="form-group">
+            <label for="exampleInputEmail1">docType</label>
+            <input type="text" name="docType" value="<%= data.docType %>"class="form-control" id="exampleInputEmail1" >
+            </div>
+        <div class="form-group">
+            <label for="exampleInputEmail1">MAKE</label>
+            <input type="text" name="make" value="<%= data.make %>"class="form-control" id="exampleInputEmail1" >
+            </div>
+        <div class="form-group">
+            <label for="exampleInputEmail1">MODEL</label>
+            <input type="text" name="model" value="<%= data.model %>"class="form-control" id="exampleInputEmail1" >
+        </div>
+        <div class="form-group">
+            <label for="exampleInputEmail1">OWNER</label>
+            <input type="text" name="owner" value="<%= data.owner %>"class="form-control" id="exampleInputEmail1" >
+        </div>
+
+       
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </form>
+<%- include('_footer.ejs') -%>
+```
+
+
+
+
+
+Router.js 파일에 router.get()추가
+
+
+
+```javascript
+router.get('/savedata/:carnum', async (req, res , next)=>{
+    console.log(req.params.carnum)
+    var searchdata = req.params.carnum
+    var result  = await queryUtil.queryData(searchdata)
+    var resultData  = await JSON.parse(result)
+    
+    console.log(resultData)
+    res.render('savedata', {data:resultData , KEY:searchdata})
+})
+```
+
+
+
+추가 한다.
+
+조회해온 결과를 DB에 저장하기 위해
+
+models/CarModel.js
+
+```javascript
+var mongoose  = require('mongoose')
+
+
+var carSchema = mongoose.Schema({
+    KEY:{
+        type:String,
+        required:true
+    },
+    color:{
+        type:String,
+        required:true
+    },
+    docType:{
+        type:String,
+        required:true
+    },
+    make:{
+        type:String,
+        required:true
+    },
+    model:{
+        type:String,
+        required:true
+    },
+    owner:{
+        type:String,
+        required:true
+    }
+})
+
+module.exports = mongoose.model('Car', carSchema)
+```
+
+
+
+
+
+Router.js 다음과 같은 코드 추가
+
+```javascript
+var Car = require('../models/CarModel')
+...
+
+router.post('/savedata', async (req ,res, next)=>{
+
+    var contact  = new Car()
+    contact.KEY = req.body.KEY
+    contact.color =req.body.color
+    contact.docType = req.body.docType
+    contact.make = req.body.make
+    contact.model = req.body.model
+    contact.owner = req.body.owner
+
+    
+    contact.save((err , result)=>{
+        if(err) {
+            console.log(err)
+        }
+
+        console.log(result)
+        res.redirect('/')
+    })
+
+    
+})
+```
+
+
+
+추가한다.
+
+
+
+
+
+app.js 연결 코드 추가(mongoDB)
+
+```javascript
+var mongoose  = require('mongoose')
+...
+var MONGO_URL = process.env.M_URL
+mongoose.connect(MONGO_URL,{ useNewUrlParser: true,useUnifiedTopology: true  })
+
+```
+
+
+
+M_URL 은 .env 파일에 정의 내려 놓는다.
+
+
+
+
+
+index.ejs 에서 Table의 각 행을 클릭했을때 http://localhost:8000/searchdata 로 이동할 수 있도록 하기위해
+
+다음과 같이 코드를 수정한다.
+
+index.ejs
+
+```ejs
+<% for(i=0;i<data.length; i++) {%>
+                      <tr>
+                        <td><%= i+1 %></td>
+                        <td><a href="/detaildata/<%= data[i].Key %>"><%= data[i].Key %></a></td>
+                        <td><%= data[i].Record.color %></td>
+                        <td><%= data[i].Record.docType %></td>
+                        <td><%= data[i].Record.make %></td>
+                        <td><%= data[i].Record.model %></td>
+                        <td><%= data[i].Record.owner %></td>
+                        <td><button>수정</button></td>
+                      </tr>
+                      <% } %>
+```
+
+
+
+
+
+<a href="/detaildata/<%= data[i].Key %>"> 과 같이  수정
+
+
+
+views/detaildata.ejs 생성후 다음과 같이 코드 추가
+
+```ejs
+<%- include('_header.ejs') -%>
+<form method="POST" , action="/savedata">
+        <div class="form-group">
+          <label for="exampleInputEmail1">Unique Key</label>
+          <input type="text" name="KEY" value="<%= KEY %>"class="form-control" id="exampleInputEmail1" >
+        </div>
+        <div class="form-group">
+                <label for="exampleInputEmail1">COLOR</label>
+                <input type="text" name="color" value="<%= data.color %>"class="form-control" id="exampleInputEmail1" >
+              </div>
+        <div class="form-group">
+            <label for="exampleInputEmail1">docType</label>
+            <input type="text" name="docType" value="<%= data.docType %>"class="form-control" id="exampleInputEmail1" >
+            </div>
+        <div class="form-group">
+            <label for="exampleInputEmail1">MAKE</label>
+            <input type="text" name="make" value="<%= data.make %>"class="form-control" id="exampleInputEmail1" >
+            </div>
+        <div class="form-group">
+            <label for="exampleInputEmail1">MODEL</label>
+            <input type="text" name="model" value="<%= data.model %>"class="form-control" id="exampleInputEmail1" >
+        </div>
+        <div class="form-group">
+            <label for="exampleInputEmail1">OWNER</label>
+            <input type="text" name="owner" value="<%= data.owner %>"class="form-control" id="exampleInputEmail1" >
+        </div>
+
+       
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </form>
+<%- include('_footer.ejs') -%>
+```
+
+
+
+
+
+Router.js 에 route.get('/detaildata/:carnum')  을 만들기 위해 다음과  같이 코드 추가
+
+
+
+```javascript
+router.get('/detaildata/:carnum', async (req, res , next)=>{
+    console.log(req.params.carnum)
+    var searchdata = req.params.carnum
+    var result  = await queryUtil.queryData(searchdata)
+    var resultData  = await JSON.parse(result)
+    
+    console.log(resultData)
+    res.render('detaildata', {data:resultData , KEY:searchdata})
+})
+```
+
+
+
